@@ -16,6 +16,7 @@ create table if not exists public.todos (
   title text not null check (length(btrim(title)) > 0),
   note text,
   due_date date,
+  priority text not null default 'medium' check (priority in ('very_low','low','medium','high','very_high')),
   is_completed boolean not null default false,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
@@ -54,7 +55,10 @@ create trigger set_guest_families_updated_at before update on public.guest_famil
 
 create index if not exists todos_user_id_idx on public.todos(user_id);
 create index if not exists todos_due_date_idx on public.todos(due_date);
+alter table public.todos add column if not exists priority text not null default 'medium' check (priority in ('very_low','low','medium','high','very_high'));
+
 create index if not exists todos_is_completed_idx on public.todos(is_completed);
+create index if not exists todos_priority_idx on public.todos(priority);
 create index if not exists gift_wishes_user_id_idx on public.gift_wishes(user_id);
 create index if not exists guest_families_user_id_idx on public.guest_families(user_id);
 create index if not exists guest_families_family_name_idx on public.guest_families(family_name);
