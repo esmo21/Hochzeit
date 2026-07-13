@@ -116,7 +116,7 @@ Optional kannst du unter **Settings > Pages > Custom domain** eine eigene Domain
 - **CSS oder JS lädt nicht:** Prüfe, dass keine Pfade mit `/` beginnen. Diese App verwendet relative Pfade.
 - **Login lädt nicht:** Prüfe, ob `js/config.js` existiert und gültige Supabase-Werte enthält.
 - **Daten bleiben leer:** Prüfe, ob du angemeldet bist und ob `schema.sql` sowie `policies.sql` ausgeführt wurden.
-- **RLS-Fehler:** Prüfe, ob `user_id` beim Insert der angemeldeten `auth.uid()` entspricht. Die Anwendung setzt `user_id` automatisch aus der aktuellen Session.
+- **RLS-Fehler:** Prüfe, ob `supabase/policies.sql` zuletzt im Supabase SQL Editor ausgeführt wurde. Die Policies sind für eine private Nutzung so eingestellt, dass alle angemeldeten Benutzer denselben Planungsbereich sehen und bearbeiten können.
 - **Ungültige Links:** Geschenkwunsch-Links müssen mit `http://` oder `https://` beginnen.
 
 ## 15. Datenbank und RLS testen
@@ -124,8 +124,8 @@ Optional kannst du unter **Settings > Pages > Custom domain** eine eigene Domain
 1. Lege zwei Benutzer in Supabase Auth an.
 2. Melde dich als Benutzer A an und erstelle Aufgaben, Wünsche und Gästegruppen.
 3. Melde dich ab und als Benutzer B an.
-4. Benutzer B darf die Daten von Benutzer A nicht sehen.
-5. Versuche im Supabase SQL Editor testweise Datensätze mit fremder `user_id` über die Client-Rolle zu verändern; die RLS-Policies müssen dies verhindern.
+4. Benutzer B muss die Daten von Benutzer A sehen, bearbeiten und löschen können.
+5. Öffne die App ohne Login oder nach dem Abmelden: Anonyme Besucher dürfen keine Planungsdaten sehen.
 
 ## Manuelle Schritte nach der Codegenerierung
 
