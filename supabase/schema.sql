@@ -62,3 +62,44 @@ create index if not exists todos_priority_idx on public.todos(priority);
 create index if not exists gift_wishes_user_id_idx on public.gift_wishes(user_id);
 create index if not exists guest_families_user_id_idx on public.guest_families(user_id);
 create index if not exists guest_families_family_name_idx on public.guest_families(family_name);
+
+create table if not exists public.seating_tables (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null check (length(btrim(name)) > 0),
+  size integer not null default 8 check (size > 0),
+  note text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.wedding_day_schedule (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  starts_at time not null,
+  title text not null check (length(btrim(title)) > 0),
+  location text,
+  responsible_person text,
+  note text,
+  status text not null default 'planned' check (status in ('planned','confirmed','open','done')),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+alter table public.guest_families add column if not exists rsvp_status text not null default 'pending' check (rsvp_status in ('pending','accepted','declined','partial'));
+alter table public.guest_families add column if not exists accepted_count integer not null default 0 check (accepted_count >= 0);
+alter table public.guest_families add column if not exists declined_count integer not null default 0 check (declined_count >= 0);
+alter table public.guest_families add column if not exists invitation_sent boolean not null default false;
+alter table public.guest_families add column if not exists overnight_needed boolean not null default false;
+alter table public.guest_families add column if not exists transport_needed boolean not null default false;
+alter table public.guest_families add column if not exists table_id uuid references public.seating_tables(id) on delete set null;
+
+drop trigger if exists set_seating_tables_updated_at on public.seating_tables;
+create trigger set_seating_tables_updated_at before update on public.seating_tables for each row execute function public.set_updated_at();
+drop trigger if exists set_wedding_day_schedule_updated_at on public.wedding_day_schedule;
+create trigger set_wedding_day_schedule_updated_at before update on public.wedding_day_schedule for each row execute function public.set_updated_at();
+
+create index if not exists seating_tables_user_id_idx on public.seating_tables(user_id);
+create index if not exists wedding_day_schedule_user_id_idx on public.wedding_day_schedule(user_id);
+create index if not exists wedding_day_schedule_starts_at_idx on public.wedding_day_schedule(starts_at);
+create index if not exists guest_families_table_id_idx on public.guest_families(table_id);
