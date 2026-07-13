@@ -1,20 +1,270 @@
-import { supabase } from './supabase-client.js';
-import { requireAuth } from './auth.js';
-import { initNavigation } from './navigation.js';
-import { $, clearChildren, confirmDialog, normalizeOptional, parseNonNegativeInteger, renderEmpty, setBusy, setMessage } from './utils.js';
-let session, rows = [], tables = [], editing = null;
-const persons = r => 1 + r.additional_adults + r.children_count;
-const rsvpLabels = { pending: 'Offen', accepted: 'Zusage', declined: 'Absage', partial: 'Teilweise' };
-const yesNo = value => value ? 'Ja' : 'Nein';
-function form(){ return $('#guest-form'); }
-async function load(){ const [{data:g,error:e1},{data:t,error:e2}] = await Promise.all([supabase.from('guest_families').select('*').order('family_name'), supabase.from('seating_tables').select('*').order('name')]); if(e1||e2) throw (e1||e2); rows=g||[]; tables=t||[]; renderTableOptions(); render(); }
-function tableName(id){ return tables.find(t => t.id === id)?.name || 'Noch kein Tisch'; }
-function renderTableOptions(){ const select=$('#table-assignment'); clearChildren(select); const empty=document.createElement('option'); empty.value=''; empty.textContent='Noch kein Tisch'; select.append(empty); tables.forEach(t=>{ const option=document.createElement('option'); option.value=t.id; option.textContent=`${t.name} (${t.size} Plätze)`; select.append(option); }); }
-function filtered(){ const q=($('#guest-search').value||'').toLowerCase().trim(), sort=$('#guest-sort').value; let arr=rows.filter(r=>!q||r.family_name.toLowerCase().includes(q)||r.main_guest_name.toLowerCase().includes(q)); return arr.sort((a,b)=>sort==='persons'?persons(b)-persons(a):sort==='rsvp'?(a.rsvp_status||'pending').localeCompare(b.rsvp_status||'pending','de'):a.family_name.localeCompare(b.family_name,'de')); }
-function totals(){ const adults=rows.reduce((s,r)=>s+1+r.additional_adults,0), kids=rows.reduce((s,r)=>s+r.children_count,0); $('#total-adults').textContent=adults; $('#total-children').textContent=kids; $('#total-persons').textContent=adults+kids; $('#total-accepted').textContent=rows.reduce((s,r)=>s+(r.accepted_count||0),0); $('#total-declined').textContent=rows.reduce((s,r)=>s+(r.declined_count||0),0); }
-function render(){ totals(); const body=$('#guest-table-body'); clearChildren(body); const arr=filtered(); if(!arr.length){ renderEmpty($('#guest-empty'),'Keine passenden Gästegruppen gefunden.'); return; } clearChildren($('#guest-empty')); arr.forEach(r=>{ const tr=document.createElement('tr'); const values=[r.family_name,r.main_guest_name,String(persons(r)),`${rsvpLabels[r.rsvp_status]||'Offen'} (${r.accepted_count||0} zu / ${r.declined_count||0} ab)`,yesNo(r.invitation_sent),yesNo(r.overnight_needed),yesNo(r.transport_needed),tableName(r.table_id),r.note||'']; values.forEach(v=>{ const td=document.createElement('td'); td.textContent=v; tr.append(td); }); const td=document.createElement('td'); const wrap=document.createElement('div'); wrap.className='actions'; const edit=document.createElement('button'); edit.className='button button-secondary'; edit.textContent='Bearbeiten'; edit.addEventListener('click',()=>startEdit(r)); const del=document.createElement('button'); del.className='button button-danger'; del.textContent='Löschen'; del.addEventListener('click',()=>remove(r.id)); wrap.append(edit,del); td.append(wrap); tr.append(td); body.append(tr); }); }
-function reset(){ editing=null; form().reset(); $('#guest-adults').value='0'; $('#guest-children').value='0'; $('#accepted-count').value='0'; $('#declined-count').value='0'; $('#rsvp-status').value='pending'; $('#table-assignment').value=''; $('#guest-submit').textContent='Gästegruppe speichern'; form().classList.remove('edit-mode'); }
-function startEdit(r){ editing=r.id; $('#family-name').value=r.family_name; $('#main-guest').value=r.main_guest_name; $('#guest-adults').value=r.additional_adults; $('#guest-children').value=r.children_count; $('#rsvp-status').value=r.rsvp_status||'pending'; $('#accepted-count').value=r.accepted_count||0; $('#declined-count').value=r.declined_count||0; $('#invitation-sent').checked=Boolean(r.invitation_sent); $('#overnight-needed').checked=Boolean(r.overnight_needed); $('#transport-needed').checked=Boolean(r.transport_needed); $('#table-assignment').value=r.table_id||''; $('#guest-note').value=r.note||''; $('#guest-submit').textContent='Änderungen speichern'; form().classList.add('edit-mode'); form().scrollIntoView({behavior:'smooth',block:'center'}); }
-async function remove(id){ if(!await confirmDialog('Diese Gästegruppe wirklich löschen?')) return; const {error}=await supabase.from('guest_families').delete().eq('id',id); if(error) return setMessage($('#guest-message'),'Der Eintrag konnte nicht gelöscht werden.','error'); rows=rows.filter(r=>r.id!==id); setMessage($('#guest-message'),'Gästegruppe wurde gelöscht.'); render(); }
-async function init(){ session=await requireAuth(); if(!session) return; initNavigation(); $('#guest-search').addEventListener('input',render); $('#guest-sort').addEventListener('change',render); $('#guest-cancel').addEventListener('click',reset); form().addEventListener('submit',async e=>{ e.preventDefault(); const family=$('#family-name').value.trim(), main=$('#main-guest').value.trim(), adults=parseNonNegativeInteger($('#guest-adults').value), children=parseNonNegativeInteger($('#guest-children').value), accepted=parseNonNegativeInteger($('#accepted-count').value), declined=parseNonNegativeInteger($('#declined-count').value); const total=1+(adults??0)+(children??0); if(!family||!main) return setMessage($('#guest-message'),'Familienname und Hauptgast sind erforderlich.','error'); if([adults,children,accepted,declined].some(v=>v===null)) return setMessage($('#guest-message'),'Personenzahlen müssen ganze Zahlen ab 0 sein.','error'); if(accepted+declined>total) return setMessage($('#guest-message'),'Zusagen und Absagen dürfen die Gesamtzahl der Gruppe nicht überschreiten.','error'); const btn=$('#guest-submit'); setBusy(btn,true,'Speichern …'); try{ const payload={family_name:family,main_guest_name:main,additional_adults:adults,children_count:children,rsvp_status:$('#rsvp-status').value,accepted_count:accepted,declined_count:declined,invitation_sent:$('#invitation-sent').checked,overnight_needed:$('#overnight-needed').checked,transport_needed:$('#transport-needed').checked,table_id:normalizeOptional($('#table-assignment').value),note:normalizeOptional($('#guest-note').value),user_id:session.user.id}; const q=editing?supabase.from('guest_families').update(payload).eq('id',editing).select().single():supabase.from('guest_families').insert(payload).select().single(); const {data,error}=await q; if(error) throw error; rows=editing?rows.map(r=>r.id===editing?data:r):[...rows,data]; reset(); setMessage($('#guest-message'),'Gästegruppe wurde gespeichert.'); render(); }catch{ setMessage($('#guest-message'),'Die Gästegruppe konnte nicht gespeichert werden.','error'); }finally{ setBusy(btn,false); } }); try{ await load(); }catch{ setMessage($('#guest-message'),'Gästeliste konnte nicht geladen werden. Prüfe, ob das Datenbankschema aktualisiert wurde.','error'); } }
+import { supabase } from "./supabase-client.js";
+import { requireAuth } from "./auth.js";
+import { initNavigation } from "./navigation.js";
+import {
+  $,
+  clearChildren,
+  confirmDialog,
+  normalizeOptional,
+  parseNonNegativeInteger,
+  renderEmpty,
+  setBusy,
+  setMessage,
+} from "./utils.js";
+let session,
+  rows = [],
+  tables = [],
+  editing = null;
+const persons = (r) => 1 + r.additional_adults + r.children_count;
+const rsvpLabels = {
+  pending: "Offen",
+  accepted: "Zusage",
+  declined: "Absage",
+  partial: "Teilweise",
+};
+const yesNo = (value) => (value ? "Ja" : "Nein");
+function form() {
+  return $("#guest-form");
+}
+async function load() {
+  const [{ data: g, error: e1 }, { data: t, error: e2 }] = await Promise.all([
+    supabase.from("guest_families").select("*").order("family_name"),
+    supabase.from("seating_tables").select("*").order("name"),
+  ]);
+  if (e1 || e2) throw e1 || e2;
+  rows = g || [];
+  tables = t || [];
+  renderTableOptions();
+  render();
+}
+function tableName(id) {
+  return tables.find((t) => t.id === id)?.name || "Noch kein Tisch";
+}
+function renderTableOptions() {
+  const select = $("#table-assignment");
+  clearChildren(select);
+  const empty = document.createElement("option");
+  empty.value = "";
+  empty.textContent = "Noch kein Tisch";
+  select.append(empty);
+  tables.forEach((t) => {
+    const option = document.createElement("option");
+    option.value = t.id;
+    option.textContent = `${t.name} (${t.size} Plätze)`;
+    select.append(option);
+  });
+}
+function filtered() {
+  const q = ($("#guest-search").value || "").toLowerCase().trim(),
+    sort = $("#guest-sort").value;
+  let arr = rows.filter(
+    (r) =>
+      !q ||
+      r.family_name.toLowerCase().includes(q) ||
+      r.main_guest_name.toLowerCase().includes(q),
+  );
+  return arr.sort((a, b) =>
+    sort === "persons"
+      ? persons(b) - persons(a)
+      : sort === "rsvp"
+        ? (a.rsvp_status || "pending").localeCompare(
+            b.rsvp_status || "pending",
+            "de",
+          )
+        : a.family_name.localeCompare(b.family_name, "de"),
+  );
+}
+function totals() {
+  const adults = rows.reduce((s, r) => s + 1 + r.additional_adults, 0),
+    kids = rows.reduce((s, r) => s + r.children_count, 0);
+  $("#total-adults").textContent = adults;
+  $("#total-children").textContent = kids;
+  $("#total-persons").textContent = adults + kids;
+  $("#total-accepted").textContent = rows.reduce(
+    (s, r) => s + (r.accepted_count || 0),
+    0,
+  );
+  $("#total-declined").textContent = rows.reduce(
+    (s, r) => s + (r.declined_count || 0),
+    0,
+  );
+}
+function render() {
+  totals();
+  const body = $("#guest-table-body");
+  clearChildren(body);
+  const arr = filtered();
+  if (!arr.length) {
+    renderEmpty($("#guest-empty"), "Keine passenden Gästegruppen gefunden.");
+    return;
+  }
+  clearChildren($("#guest-empty"));
+  arr.forEach((r) => {
+    const tr = document.createElement("tr");
+    const values = [
+      r.family_name,
+      r.main_guest_name,
+      String(persons(r)),
+      `${rsvpLabels[r.rsvp_status] || "Offen"} (${r.accepted_count || 0} zu / ${r.declined_count || 0} ab)`,
+      yesNo(r.invitation_sent),
+      yesNo(r.overnight_needed),
+      yesNo(r.transport_needed),
+      tableName(r.table_id),
+      r.note || "",
+    ];
+    values.forEach((v) => {
+      const td = document.createElement("td");
+      td.textContent = v;
+      tr.append(td);
+    });
+    const td = document.createElement("td");
+    const wrap = document.createElement("div");
+    wrap.className = "actions";
+    const edit = document.createElement("button");
+    edit.className = "button button-secondary";
+    edit.textContent = "Bearbeiten";
+    edit.addEventListener("click", () => startEdit(r));
+    const del = document.createElement("button");
+    del.className = "button button-danger";
+    del.textContent = "Löschen";
+    del.addEventListener("click", () => remove(r.id));
+    wrap.append(edit, del);
+    td.append(wrap);
+    tr.append(td);
+    body.append(tr);
+  });
+}
+function reset() {
+  editing = null;
+  form().reset();
+  $("#guest-adults").value = "0";
+  $("#guest-children").value = "0";
+  $("#accepted-count").value = "0";
+  $("#declined-count").value = "0";
+  $("#rsvp-status").value = "pending";
+  $("#table-assignment").value = "";
+  $("#guest-submit").textContent = "Gästegruppe speichern";
+  form().classList.remove("edit-mode");
+}
+function startEdit(r) {
+  editing = r.id;
+  $("#family-name").value = r.family_name;
+  $("#main-guest").value = r.main_guest_name;
+  $("#guest-adults").value = r.additional_adults;
+  $("#guest-children").value = r.children_count;
+  $("#rsvp-status").value = r.rsvp_status || "pending";
+  $("#accepted-count").value = r.accepted_count || 0;
+  $("#declined-count").value = r.declined_count || 0;
+  $("#invitation-sent").checked = Boolean(r.invitation_sent);
+  $("#overnight-needed").checked = Boolean(r.overnight_needed);
+  $("#transport-needed").checked = Boolean(r.transport_needed);
+  $("#table-assignment").value = r.table_id || "";
+  $("#guest-note").value = r.note || "";
+  $("#guest-submit").textContent = "Änderungen speichern";
+  form().classList.add("edit-mode");
+  form().scrollIntoView({ behavior: "smooth", block: "center" });
+}
+async function remove(id) {
+  if (!(await confirmDialog("Diese Gästegruppe wirklich löschen?"))) return;
+  const { error } = await supabase.from("guest_families").delete().eq("id", id);
+  if (error)
+    return setMessage(
+      $("#guest-message"),
+      "Der Eintrag konnte nicht gelöscht werden.",
+      "error",
+    );
+  rows = rows.filter((r) => r.id !== id);
+  setMessage($("#guest-message"), "Gästegruppe wurde gelöscht.");
+  render();
+}
+async function init() {
+  session = await requireAuth();
+  if (!session) return;
+  initNavigation();
+  $("#guest-search").addEventListener("input", render);
+  $("#guest-sort").addEventListener("change", render);
+  $("#guest-cancel").addEventListener("click", reset);
+  form().addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const family = $("#family-name").value.trim(),
+      main = $("#main-guest").value.trim(),
+      adults = parseNonNegativeInteger($("#guest-adults").value),
+      children = parseNonNegativeInteger($("#guest-children").value),
+      accepted = parseNonNegativeInteger($("#accepted-count").value),
+      declined = parseNonNegativeInteger($("#declined-count").value);
+    const total = 1 + (adults ?? 0) + (children ?? 0);
+    if (!family || !main)
+      return setMessage(
+        $("#guest-message"),
+        "Familienname und Hauptgast sind erforderlich.",
+        "error",
+      );
+    if ([adults, children, accepted, declined].some((v) => v === null))
+      return setMessage(
+        $("#guest-message"),
+        "Personenzahlen müssen ganze Zahlen ab 0 sein.",
+        "error",
+      );
+    if (accepted + declined > total)
+      return setMessage(
+        $("#guest-message"),
+        "Zusagen und Absagen dürfen die Gesamtzahl der Gruppe nicht überschreiten.",
+        "error",
+      );
+    const btn = $("#guest-submit");
+    setBusy(btn, true, "Speichern …");
+    try {
+      const payload = {
+        family_name: family,
+        main_guest_name: main,
+        additional_adults: adults,
+        children_count: children,
+        rsvp_status: $("#rsvp-status").value,
+        accepted_count: accepted,
+        declined_count: declined,
+        invitation_sent: $("#invitation-sent").checked,
+        overnight_needed: $("#overnight-needed").checked,
+        transport_needed: $("#transport-needed").checked,
+        table_id: normalizeOptional($("#table-assignment").value),
+        note: normalizeOptional($("#guest-note").value),
+        user_id: session.user.id,
+      };
+      const q = editing
+        ? supabase
+            .from("guest_families")
+            .update(payload)
+            .eq("id", editing)
+            .select()
+            .single()
+        : supabase.from("guest_families").insert(payload).select().single();
+      const { data, error } = await q;
+      if (error) throw error;
+      rows = editing
+        ? rows.map((r) => (r.id === editing ? data : r))
+        : [...rows, data];
+      reset();
+      setMessage($("#guest-message"), "Gästegruppe wurde gespeichert.");
+      render();
+    } catch (error) {
+      console.error("Guest save failed:", error);
+      setMessage(
+        $("#guest-message"),
+        `Die Gästegruppe konnte nicht gespeichert werden: ${error?.message || "Unbekannter Fehler"}`,
+        "error",
+      );
+    } finally {
+      setBusy(btn, false);
+    }
+  });
+  try {
+    await load();
+  } catch (error) {
+    console.error("Guest list load failed:", error);
+    setMessage(
+      $("#guest-message"),
+      `Gästeliste konnte nicht geladen werden: ${error?.message || "Prüfe, ob das Datenbankschema aktualisiert wurde."}`,
+      "error",
+    );
+  }
+}
 init();
