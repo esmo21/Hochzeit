@@ -49,7 +49,7 @@ Unter **Authentication > Providers** muss **Email** aktiviert sein. Für einen p
 
 Unter **Authentication > Users** kannst du einen Benutzer mit E-Mail-Adresse und Passwort anlegen. Mit diesen Daten meldest du dich später auf `login.html` an.
 
-## 7. Supabase-URL und Publishable Key konfigurieren
+## 7. Supabase-URL und Publishable Key lokal konfigurieren
 
 Kopiere die Beispieldatei:
 
@@ -64,7 +64,14 @@ export const SUPABASE_URL = "https://DEIN-PROJEKT.supabase.co";
 export const SUPABASE_PUBLISHABLE_KEY = "DEIN_PUBLISHABLE_ODER_ANON_KEY";
 ```
 
-`js/config.js` ist in `.gitignore` eingetragen, damit keine projektspezifischen Zugangsdaten versehentlich veröffentlicht werden. Für GitHub Pages musst du diese Datei bewusst in deiner veröffentlichten Version bereitstellen oder die Werte in einer privaten Kopie eintragen, bevor du veröffentlichst. Verwende ausschließlich den Publishable beziehungsweise anon Key.
+`js/config.js` ist in `.gitignore` eingetragen, damit keine projektspezifischen Werte versehentlich eingecheckt werden. Die Supabase Project URL und der Publishable beziehungsweise anon Key sind in einer Browser-App allerdings technisch öffentlich sichtbar und daher keine echten Geheimnisse. Sicher ist das nur, wenn du niemals den Service-Role-Key im Frontend nutzt und deine Supabase Row Level Security Policies korrekt greifen.
+
+Für GitHub Pages erzeugt der Workflow `.github/workflows/deploy.yml` diese Datei während des Deployments aus GitHub Actions Secrets. Lege dafür in GitHub unter **Settings > Secrets and variables > Actions** zwei Repository-Secrets an:
+
+- `SUPABASE_URL` mit deiner Supabase Project URL.
+- `SUPABASE_PUBLISHABLE_KEY` mit deinem Publishable/anon Key.
+
+Die Datei `js/config.js` bleibt lokal und im Git-Repository ignoriert, wird aber im GitHub-Pages-Artefakt zur Laufzeit erstellt.
 
 ## 8. Warum niemals der Service-Role-Key verwendet werden darf
 
@@ -83,11 +90,11 @@ git push -u origin main
 
 ## 10. GitHub Pages aktivieren
 
-Öffne dein Repository bei GitHub und gehe zu **Settings > Pages**.
+Öffne dein Repository bei GitHub und gehe zu **Settings > Pages**. Wähle als Source **GitHub Actions**.
 
-## 11. Deployment konfigurieren
+## 11. Automatisches Deployment
 
-Wähle als Source **Deploy from a branch**, danach den Branch `main` und das Verzeichnis `/ (root)`. Speichere die Einstellung.
+Der Workflow `.github/workflows/deploy.yml` deployt die Seite automatisch, wenn Änderungen auf den Branch `main` gepusht werden. Du kannst ihn zusätzlich manuell über **Actions > Deploy GitHub Pages > Run workflow** starten.
 
 ## 12. Erwartete URL
 
@@ -130,5 +137,5 @@ Optional kannst du unter **Settings > Pages > Custom domain** eine eigene Domain
 6. `js/config.example.js` nach `js/config.js` kopieren und Project URL sowie Publishable/anon Key eintragen.
 7. Lokal mit `python3 -m http.server 8080` testen.
 8. Repository zu GitHub pushen.
-9. GitHub Pages für `main` und `/ (root)` aktivieren.
+9. GitHub Pages mit Source **GitHub Actions** aktivieren und die Repository-Secrets `SUPABASE_URL` sowie `SUPABASE_PUBLISHABLE_KEY` anlegen.
 10. Die veröffentlichte URL testen und besonders Login, Navigation, CRUD, RLS und mobile Ansicht prüfen.
