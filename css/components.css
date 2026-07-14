@@ -278,3 +278,8 @@ dialog::backdrop {
   color: var(--danger);
   font-weight: 800;
 }
+.range-input {
+  accent-color: var(--primary);
+  padding-left: 0;
+  padding-right: 0;
+}

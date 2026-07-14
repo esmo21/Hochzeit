@@ -103,3 +103,22 @@ create index if not exists seating_tables_user_id_idx on public.seating_tables(u
 create index if not exists wedding_day_schedule_user_id_idx on public.wedding_day_schedule(user_id);
 create index if not exists wedding_day_schedule_starts_at_idx on public.wedding_day_schedule(starts_at);
 create index if not exists guest_families_table_id_idx on public.guest_families(table_id);
+
+create table if not exists public.registry_office_rooms (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  office_name text not null check (length(btrim(office_name)) > 0),
+  room_name text not null check (length(btrim(room_name)) > 0),
+  website_url text check (website_url is null or website_url ~* '^https?://'),
+  capacity text not null check (length(btrim(capacity)) > 0),
+  price text not null check (length(btrim(price)) > 0),
+  rating integer not null default 5 check (rating between 1 and 10),
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists set_registry_office_rooms_updated_at on public.registry_office_rooms;
+create trigger set_registry_office_rooms_updated_at before update on public.registry_office_rooms for each row execute function public.set_updated_at();
+
+create index if not exists registry_office_rooms_user_id_idx on public.registry_office_rooms(user_id);
+create index if not exists registry_office_rooms_office_name_idx on public.registry_office_rooms(office_name);
