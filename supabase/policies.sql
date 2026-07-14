@@ -72,3 +72,14 @@ drop policy if exists "wedding_day_schedule_update_authenticated" on public.wedd
 create policy "wedding_day_schedule_update_authenticated" on public.wedding_day_schedule for update to authenticated using (true) with check (true);
 drop policy if exists "wedding_day_schedule_delete_authenticated" on public.wedding_day_schedule;
 create policy "wedding_day_schedule_delete_authenticated" on public.wedding_day_schedule for delete to authenticated using (true);
+
+alter table public.registry_office_rooms enable row level security;
+
+drop policy if exists "registry_office_rooms_select_authenticated" on public.registry_office_rooms;
+create policy "registry_office_rooms_select_authenticated" on public.registry_office_rooms for select to authenticated using (true);
+drop policy if exists "registry_office_rooms_insert_authenticated" on public.registry_office_rooms;
+create policy "registry_office_rooms_insert_authenticated" on public.registry_office_rooms for insert to authenticated with check (true);
+drop policy if exists "registry_office_rooms_update_authenticated" on public.registry_office_rooms;
+create policy "registry_office_rooms_update_authenticated" on public.registry_office_rooms for update to authenticated using (true) with check (true);
+drop policy if exists "registry_office_rooms_delete_authenticated" on public.registry_office_rooms;
+create policy "registry_office_rooms_delete_authenticated" on public.registry_office_rooms for delete to authenticated using (true);
