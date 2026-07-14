@@ -283,3 +283,26 @@ dialog::backdrop {
   padding-left: 0;
   padding-right: 0;
 }
+.toast {
+  position: fixed;
+  right: clamp(16px, 4vw, 32px);
+  bottom: clamp(16px, 4vw, 32px);
+  z-index: 1000;
+  max-width: min(420px, calc(100vw - 32px));
+  padding: 14px 18px;
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  background: #fff;
+  box-shadow: 0 18px 45px rgba(46, 31, 38, 0.18);
+  font-weight: 700;
+}
+.toast.success {
+  border-color: #bfdecf;
+  color: var(--success);
+  background: #f1fbf5;
+}
+.toast.error {
+  border-color: #efc5c8;
+  color: var(--danger);
+  background: #fff3f4;
+}

@@ -3,7 +3,9 @@ export const $$ = (selector, root = document) => Array.from(root.querySelectorAl
 export function formatDate(dateString){ if(!dateString) return 'Ohne Datum'; const [y,m,d]=dateString.split('-'); return `${d}.${m}.${y}`; }
 export function todayISO(){ const d=new Date(); const y=d.getFullYear(); const m=String(d.getMonth()+1).padStart(2,'0'); const day=String(d.getDate()).padStart(2,'0'); return `${y}-${m}-${day}`; }
 export function isOverdue(dateString, done=false){ return Boolean(dateString && !done && dateString < todayISO()); }
-export function setMessage(el, text='', type='success'){ if(!el) return; el.textContent=text; el.className=`notice ${type}`; el.hidden=!text; }
+function getToast(){ let toast=$('#app-toast'); if(toast) return toast; toast=document.createElement('div'); toast.id='app-toast'; toast.className='toast'; toast.setAttribute('role','status'); toast.setAttribute('aria-live','polite'); toast.hidden=true; document.body.append(toast); return toast; }
+function showToast(text='', type='success'){ const toast=getToast(); toast.textContent=text; toast.className=`toast ${type}`; toast.hidden=!text; if(!text) return; window.clearTimeout(showToast.timeout); showToast.timeout=window.setTimeout(()=>{ toast.hidden=true; }, 4500); }
+export function setMessage(el, text='', type='success'){ if(el){ el.textContent=text; el.className=`notice ${type}`; el.setAttribute('role', type === 'error' ? 'alert' : 'status'); el.setAttribute('aria-live', type === 'error' ? 'assertive' : 'polite'); el.hidden=!text; } if(text) showToast(text,type); }
 export function clearChildren(node){ while(node.firstChild) node.removeChild(node.firstChild); }
 export function setBusy(button, busy, label){ if(!button) return; if(!button.dataset.defaultText) button.dataset.defaultText=button.textContent; button.disabled=busy; button.textContent=busy ? (label || 'Bitte warten …') : button.dataset.defaultText; }
 export function normalizeOptional(value){ const v=String(value ?? '').trim(); return v === '' ? null : v; }
