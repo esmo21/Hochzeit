@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Moodboard · Hochzeitsplaner</title>
+    <link rel="stylesheet" href="css/styles.css">
+    <link rel="stylesheet" href="css/components.css">
+    <link rel="stylesheet" href="css/responsive.css">
+    <script type="module" src="js/moodboard.js"></script>
+  </head>
+  <body class="page">
+    <a class="skip-link" href="#main">Zum Inhalt springen</a>
+    <header class="site-header">
+      <div class="container header-inner">
+        <a class="brand" href="index.html">
+          <img src="assets/icons/heart.svg" alt="">
+          <span>Hochzeitsplaner</span>
+        </a>
+        <button class="button button-secondary nav-toggle" type="button" aria-expanded="false" aria-controls="nav-menu">Menü</button>
+        <nav id="nav-menu" class="nav-menu" aria-label="Hauptnavigation">
+          <ul class="nav-list">
+            <li><a class="nav-link" href="index.html">Übersicht</a></li>
+            <li><a class="nav-link" href="todos.html">Aufgaben</a></li>
+            <li><a class="nav-link" href="geschenke.html">Geschenkwünsche</a></li>
+            <li><a class="nav-link" href="gaeste.html">Gästeliste</a></li>
+            <li><a class="nav-link" href="planung.html">Tages- &amp; Sitzplan</a></li>
+            <li><a class="nav-link" href="standesamt.html">Standesamt</a></li>
+            <li><a class="nav-link" href="moodboard.html">Moodboard</a></li>
+            <li><button id="logout-button" class="logout-button" type="button">Abmelden</button></li>
+          </ul>
+        </nav>
+      </div>
+    </header>
+    <main id="main" class="main container moodboard-main">
+      <section class="moodboard-hero">
+        <div class="hero-card moodboard-card">
+          <p class="eyebrow">Inspiration</p>
+          <h1>Moodboard</h1>
+          <p class="lead">Eine große Ansicht der gesammelten Stimmung, Farben und Bildideen für eure Hochzeit.</p>
+        </div>
+        <figure class="moodboard-frame">
+          <img
+            class="moodboard-image"
+            src="assets/images/moodboard.jpg"
+            alt="Moodboard mit inspirierenden Bildausschnitten für die Hochzeitsplanung"
+            loading="eager"
+            decoding="async"
+          >
+          <figcaption class="moodboard-caption">Das Moodboard in großer Ansicht.</figcaption>
+        </figure>
+      </section>
+    </main>
+  </body>
+</html>
