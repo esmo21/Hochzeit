@@ -267,3 +267,17 @@ h3 {
   color: var(--muted);
   font-size: 0.98rem;
 }
+
+.dashboard-hedgehog {
+  width: min(100%, 360px);
+  aspect-ratio: 1;
+  margin: 48px auto 0;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: 50% 50% 20px 20px;
+  background-color: #f7efe7;
+  background-image: var(--dashboard-hedgehog-image);
+  background-position: center;
+  background-size: cover;
+  box-shadow: var(--shadow);
+}
