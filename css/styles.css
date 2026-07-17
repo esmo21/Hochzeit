@@ -280,4 +280,18 @@ h3 {
   background-position: center;
   background-size: cover;
   box-shadow: var(--shadow);
+  cursor: pointer;
+}
+
+.dashboard-hedgehog:focus-visible {
+  outline: 3px solid var(--accent);
+  outline-offset: 4px;
+}
+
+.hedgehog-greeting {
+  margin: 16px auto 0;
+  color: var(--accent);
+  font-size: 1.25rem;
+  font-weight: 700;
+  text-align: center;
 }
