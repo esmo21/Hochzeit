@@ -19,23 +19,6 @@ export function initNavigation() {
     }
   });
 
-  const navList = $(".nav-list");
-  if (navList && !navList.querySelector('a[href="moodboard.html"]')) {
-    const moodboardItem = document.createElement("li");
-    const moodboardLink = document.createElement("a");
-    moodboardLink.className = "nav-link";
-    moodboardLink.href = "moodboard.html";
-    moodboardLink.textContent = "Moodboard";
-    moodboardItem.append(moodboardLink);
-
-    const logoutButton = $("#logout-button");
-    if (logoutButton?.parentElement === navList) {
-      navList.insertBefore(moodboardItem, logoutButton.parentElement);
-    } else {
-      navList.append(moodboardItem);
-    }
-  }
-
   const out = $("#logout-button");
   if (out) {
     out.addEventListener("click", signOut);
