@@ -288,6 +288,15 @@ h3 {
   outline-offset: 4px;
 }
 
+.hedgehog-stop-button {
+  display: block;
+  margin: 16px auto 0;
+}
+
+.hedgehog-stop-button[hidden] {
+  display: none;
+}
+
 .hedgehog-greeting {
   margin: 16px auto 0;
   color: var(--accent);
