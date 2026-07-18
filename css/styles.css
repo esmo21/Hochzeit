@@ -293,6 +293,10 @@ h3 {
   margin: 16px auto 0;
 }
 
+.hedgehog-stop-button[hidden] {
+  display: none !important;
+}
+
 .hedgehog-greeting {
   margin: 16px auto 0;
   color: var(--accent);
