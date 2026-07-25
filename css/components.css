@@ -99,6 +99,18 @@
 .form-row label {
   font-weight: 700;
 }
+.cost-fieldset { display: grid; gap: 14px; margin: 0; padding: 18px; border: 1px solid var(--border); border-radius: 16px; }
+.cost-fieldset legend { font-weight: 800; padding: 0 6px; }
+.cost-fieldset .muted { margin: 0; }
+.cost-rows, .location-list { display: grid; gap: 14px; }
+.cost-row { display: grid; grid-template-columns: 2fr 1fr 1fr auto; gap: 12px; align-items: end; padding-bottom: 14px; border-bottom: 1px solid var(--border); }
+.location-info { min-height: 150px; }
+.location-card { display: grid; gap: 18px; }
+.location-card h3, .location-description { margin: 0; }
+.location-description { white-space: pre-wrap; }
+.location-heading { display: flex; justify-content: space-between; align-items: start; gap: 18px; }
+.location-total { display: grid; gap: 3px; text-align: right; color: var(--muted); }
+.location-total strong { color: var(--primary-dark); font-size: 1.25rem; white-space: nowrap; }
 .input,
 select,
 textarea {
