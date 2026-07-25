@@ -5,17 +5,22 @@ import { $, clearChildren, confirmDialog, normalizeOptional, renderEmpty, setBus
 
 let session;
 let locations = [];
+let editingLocationId = null;
 const money = value => Number(value || 0).toLocaleString('de-DE', { style: 'currency', currency: 'EUR' });
 
-function createCostRow() {
+function createCostRow(cost = {}) {
   const row = document.createElement('div');
   row.className = 'cost-row';
   row.innerHTML = '<div class="form-row"><label>Kostenname<input class="input" data-cost-name maxlength="180" placeholder="z. B. Catering"></label></div><div class="form-row"><label>Kosten von (€)<input class="input" data-cost-from type="number" min="0" step="0.01" inputmode="decimal"></label></div><div class="form-row"><label>Kosten bis (€)<input class="input" data-cost-to type="number" min="0" step="0.01" inputmode="decimal"></label></div><button class="button button-danger cost-remove" type="button" aria-label="Kostenposition entfernen">Entfernen</button>';
+  if (cost.id) row.dataset.costId = cost.id;
+  $('[data-cost-name]', row).value = cost.name || '';
+  $('[data-cost-from]', row).value = cost.cost_from ?? '';
+  $('[data-cost-to]', row).value = cost.cost_to ?? '';
   return row;
 }
 function addCostRow() { $('#cost-rows').append(createCostRow()); }
 function readCosts() {
-  return [...document.querySelectorAll('.cost-row')].map(row => ({ name: $('[data-cost-name]', row).value.trim(), cost_from: $('[data-cost-from]', row).value === '' ? null : Number($('[data-cost-from]', row).value), cost_to: $('[data-cost-to]', row).value === '' ? null : Number($('[data-cost-to]', row).value) })).filter(cost => cost.name || cost.cost_from !== null || cost.cost_to !== null);
+  return [...document.querySelectorAll('.cost-row')].map(row => ({ id: row.dataset.costId || null, name: $('[data-cost-name]', row).value.trim(), cost_from: $('[data-cost-from]', row).value === '' ? null : Number($('[data-cost-from]', row).value), cost_to: $('[data-cost-to]', row).value === '' ? null : Number($('[data-cost-to]', row).value) })).filter(cost => cost.name || cost.cost_from !== null || cost.cost_to !== null);
 }
 function validateCosts(costs) {
   if (costs.some(cost => !cost.name)) return 'Bitte gib für jede Kostenposition einen Namen ein.';
@@ -24,7 +29,32 @@ function validateCosts(costs) {
   if (costs.some(cost => cost.cost_from > cost.cost_to)) return '„Kosten von“ darf nicht größer als „Kosten bis“ sein.';
   return null;
 }
-function resetForm() { $('#location-form').reset(); clearChildren($('#cost-rows')); addCostRow(); }
+function resetForm() {
+  editingLocationId = null;
+  $('#location-form').reset();
+  $('#location-form').classList.remove('edit-mode');
+  $('#location-form-heading').textContent = 'Location hinzufügen';
+  $('#location-submit').textContent = 'Location speichern';
+  $('#location-submit').dataset.defaultText = 'Location speichern';
+  $('#location-reset').textContent = 'Zurücksetzen';
+  clearChildren($('#cost-rows'));
+  addCostRow();
+}
+function startEdit(location) {
+  editingLocationId = location.id;
+  $('#location-name').value = location.name;
+  $('#location-info').value = location.general_information || '';
+  clearChildren($('#cost-rows'));
+  const costs = (location.location_costs || []).sort((a, b) => a.created_at.localeCompare(b.created_at));
+  (costs.length ? costs : [{}]).forEach(cost => $('#cost-rows').append(createCostRow(cost)));
+  $('#location-form').classList.add('edit-mode');
+  $('#location-form-heading').textContent = 'Location bearbeiten';
+  $('#location-submit').textContent = 'Änderungen speichern';
+  $('#location-submit').dataset.defaultText = 'Änderungen speichern';
+  $('#location-reset').textContent = 'Bearbeiten abbrechen';
+  $('#location-form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  $('#location-name').focus({ preventScroll: true });
+}
 async function load() {
   const { data, error } = await supabase.from('wedding_locations').select('*, location_costs(*)').order('created_at', { ascending: false });
   if (error) throw error;
@@ -50,7 +80,8 @@ function render() {
       costs.forEach(cost => { const row = document.createElement('tr'); [cost.name, money(cost.cost_from), money(cost.cost_to)].forEach(value => { const cell = document.createElement('td'); cell.textContent = value; row.append(cell); }); body.append(row); });
     } else { table.className = 'muted'; table.textContent = 'Keine Kostenpositionen hinterlegt.'; }
     const actions = document.createElement('div'); actions.className = 'actions';
-    const remove = document.createElement('button'); remove.className = 'button button-danger'; remove.type = 'button'; remove.textContent = 'Location löschen'; remove.addEventListener('click', () => removeLocation(location.id)); actions.append(remove);
+    const edit = document.createElement('button'); edit.className = 'button button-secondary'; edit.type = 'button'; edit.textContent = 'Location und Kosten bearbeiten'; edit.addEventListener('click', () => startEdit(location));
+    const remove = document.createElement('button'); remove.className = 'button button-danger'; remove.type = 'button'; remove.textContent = 'Location löschen'; remove.addEventListener('click', () => removeLocation(location.id)); actions.append(edit, remove);
     card.append(heading, info, table, actions); list.append(card);
   });
 }
@@ -71,10 +102,27 @@ async function init() {
     if (validationError) return setMessage($('#location-message'), validationError, 'error');
     const button = $('#location-submit'); setBusy(button, true, 'Speichern …');
     try {
-      const { data: location, error } = await supabase.from('wedding_locations').insert({ user_id: session.user.id, name, general_information: normalizeOptional($('#location-info').value) }).select().single(); if (error) throw error;
-      if (costs.length) { const { error: costsError } = await supabase.from('location_costs').insert(costs.map(cost => ({ ...cost, location_id: location.id }))); if (costsError) { await supabase.from('wedding_locations').delete().eq('id', location.id); throw costsError; } }
-      resetForm(); setMessage($('#location-message'), 'Location wurde gespeichert.'); await load();
-    } catch { setMessage($('#location-message'), 'Die Location konnte nicht gespeichert werden.', 'error'); } finally { setBusy(button, false); }
+      const payload = { user_id: session.user.id, name, general_information: normalizeOptional($('#location-info').value) };
+      if (editingLocationId) {
+        const locationId = editingLocationId;
+        const existingLocation = locations.find(location => location.id === locationId);
+        const existingIds = (existingLocation?.location_costs || []).map(cost => cost.id);
+        const keptIds = costs.map(cost => cost.id).filter(Boolean);
+        const removedIds = existingIds.filter(id => !keptIds.includes(id));
+        const { error } = await supabase.from('wedding_locations').update(payload).eq('id', locationId); if (error) throw error;
+        const existingCosts = costs.filter(cost => cost.id);
+        const newCosts = costs.filter(cost => !cost.id).map(({ id, ...cost }) => ({ ...cost, location_id: locationId }));
+        const updateResults = await Promise.all(existingCosts.map(cost => supabase.from('location_costs').update({ name: cost.name, cost_from: cost.cost_from, cost_to: cost.cost_to }).eq('id', cost.id)));
+        const updateError = updateResults.find(result => result.error)?.error; if (updateError) throw updateError;
+        if (newCosts.length) { const { error: costsError } = await supabase.from('location_costs').insert(newCosts); if (costsError) throw costsError; }
+        if (removedIds.length) { const { error: removeError } = await supabase.from('location_costs').delete().in('id', removedIds); if (removeError) throw removeError; }
+      } else {
+        const { data: location, error } = await supabase.from('wedding_locations').insert(payload).select().single(); if (error) throw error;
+        if (costs.length) { const { error: costsError } = await supabase.from('location_costs').insert(costs.map(({ id, ...cost }) => ({ ...cost, location_id: location.id }))); if (costsError) { await supabase.from('wedding_locations').delete().eq('id', location.id); throw costsError; } }
+      }
+      const message = editingLocationId ? 'Location und Kosten wurden aktualisiert.' : 'Location wurde gespeichert.';
+      resetForm(); setMessage($('#location-message'), message); await load();
+    } catch { setMessage($('#location-message'), 'Die Location und ihre Kosten konnten nicht gespeichert werden.', 'error'); } finally { setBusy(button, false); }
   });
   try { await load(); } catch { setMessage($('#location-message'), 'Locations konnten nicht geladen werden.', 'error'); }
 }
