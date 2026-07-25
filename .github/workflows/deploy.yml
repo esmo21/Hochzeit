@@ -42,10 +42,16 @@ jobs:
           EOF_CONFIG
 
       - name: Upload static site
+        id: pages-artifact
         uses: actions/upload-pages-artifact@v3
         with:
+          # A re-run keeps artifacts from earlier attempts under the same run ID.
+          # Use an attempt-specific name so deploy-pages always finds one match.
+          name: github-pages-${{ github.run_attempt }}
           path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          artifact_name: github-pages-${{ github.run_attempt }}
