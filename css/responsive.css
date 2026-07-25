@@ -1,4 +1,7 @@
 @media (max-width: 820px) {
+  .cost-row { grid-template-columns: 1fr; }
+  .location-heading { display: grid; }
+  .location-total { text-align: left; }
   .hero {
     grid-template-columns: 1fr;
   }

@@ -122,3 +122,26 @@ create trigger set_registry_office_rooms_updated_at before update on public.regi
 
 create index if not exists registry_office_rooms_user_id_idx on public.registry_office_rooms(user_id);
 create index if not exists registry_office_rooms_office_name_idx on public.registry_office_rooms(office_name);
+
+create table if not exists public.wedding_locations (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null check (length(btrim(name)) > 0),
+  general_information text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.location_costs (
+  id uuid primary key default gen_random_uuid(),
+  location_id uuid not null references public.wedding_locations(id) on delete cascade,
+  name text not null check (length(btrim(name)) > 0),
+  cost_from numeric(12,2) not null check (cost_from >= 0),
+  cost_to numeric(12,2) not null check (cost_to >= cost_from),
+  created_at timestamptz not null default now()
+);
+
+drop trigger if exists set_wedding_locations_updated_at on public.wedding_locations;
+create trigger set_wedding_locations_updated_at before update on public.wedding_locations for each row execute function public.set_updated_at();
+create index if not exists wedding_locations_user_id_idx on public.wedding_locations(user_id);
+create index if not exists location_costs_location_id_idx on public.location_costs(location_id);

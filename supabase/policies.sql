@@ -3,6 +3,8 @@ alter table public.gift_wishes enable row level security;
 alter table public.guest_families enable row level security;
 alter table public.seating_tables enable row level security;
 alter table public.wedding_day_schedule enable row level security;
+alter table public.wedding_locations enable row level security;
+alter table public.location_costs enable row level security;
 
 -- Private deployment mode: every authenticated account belongs to the same
 -- wedding planning workspace. This lets both partners see and manage the same
@@ -83,3 +85,21 @@ drop policy if exists "registry_office_rooms_update_authenticated" on public.reg
 create policy "registry_office_rooms_update_authenticated" on public.registry_office_rooms for update to authenticated using (true) with check (true);
 drop policy if exists "registry_office_rooms_delete_authenticated" on public.registry_office_rooms;
 create policy "registry_office_rooms_delete_authenticated" on public.registry_office_rooms for delete to authenticated using (true);
+
+drop policy if exists "wedding_locations_select_authenticated" on public.wedding_locations;
+create policy "wedding_locations_select_authenticated" on public.wedding_locations for select to authenticated using (true);
+drop policy if exists "wedding_locations_insert_authenticated" on public.wedding_locations;
+create policy "wedding_locations_insert_authenticated" on public.wedding_locations for insert to authenticated with check (true);
+drop policy if exists "wedding_locations_update_authenticated" on public.wedding_locations;
+create policy "wedding_locations_update_authenticated" on public.wedding_locations for update to authenticated using (true) with check (true);
+drop policy if exists "wedding_locations_delete_authenticated" on public.wedding_locations;
+create policy "wedding_locations_delete_authenticated" on public.wedding_locations for delete to authenticated using (true);
+
+drop policy if exists "location_costs_select_authenticated" on public.location_costs;
+create policy "location_costs_select_authenticated" on public.location_costs for select to authenticated using (true);
+drop policy if exists "location_costs_insert_authenticated" on public.location_costs;
+create policy "location_costs_insert_authenticated" on public.location_costs for insert to authenticated with check (true);
+drop policy if exists "location_costs_update_authenticated" on public.location_costs;
+create policy "location_costs_update_authenticated" on public.location_costs for update to authenticated using (true) with check (true);
+drop policy if exists "location_costs_delete_authenticated" on public.location_costs;
+create policy "location_costs_delete_authenticated" on public.location_costs for delete to authenticated using (true);
