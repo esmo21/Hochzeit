@@ -134,6 +134,7 @@ h3 {
 }
 
 .header-inner {
+  width: min(1400px, calc(100% - 32px));
   display: flex;
   align-items: center;
   justify-content: space-between;

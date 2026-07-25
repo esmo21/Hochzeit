@@ -8,6 +8,7 @@ Eine produktionsnahe, mehrseitige Webanwendung zur Hochzeitsplanung mit semantis
 - `todos.html`: CRUD-Verwaltung für Aufgaben inklusive Status, Sortierung und überfälliger Markierung.
 - `geschenke.html`: CRUD-Verwaltung für Geschenkwünsche inklusive Link-, Preis- und Prioritätsvalidierung.
 - `gaeste.html`: CRUD-Verwaltung für Familien/Gästegruppen inklusive Summenberechnung.
+- `budget.html`: CRUD-Budgetplanung mit Kostenschätzungen, tatsächlichen Kosten und Bezahlstatus.
 - `login.html`: Supabase-E-Mail-/Passwort-Anmeldung.
 - `js/supabase-client.js`: zentrale Supabase-Client-Instanz.
 - `js/auth.js`: gemeinsame Authentifizierung, Session-Prüfung und Abmeldung.

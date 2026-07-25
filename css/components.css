@@ -198,6 +198,12 @@ textarea {
   font-size: 2rem;
   color: var(--primary-dark);
 }
+.budget-stats { margin: 22px 0; }
+.budget-stats .stat { display: flex; flex-direction: column-reverse; }
+.budget-stats .stat strong { font-size: 1.5rem; }
+.budget-paid-field { align-self: end; }
+.budget-paid { color: var(--success); font-weight: 800; }
+.nav-toggle { display: none; }
 .list {
   display: grid;
   gap: 12px;

@@ -145,3 +145,20 @@ drop trigger if exists set_wedding_locations_updated_at on public.wedding_locati
 create trigger set_wedding_locations_updated_at before update on public.wedding_locations for each row execute function public.set_updated_at();
 create index if not exists wedding_locations_user_id_idx on public.wedding_locations(user_id);
 create index if not exists location_costs_location_id_idx on public.location_costs(location_id);
+
+create table if not exists public.budget_costs (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  name text not null check (length(btrim(name)) > 0),
+  estimated_min numeric(12,2) not null check (estimated_min >= 0),
+  estimated_max numeric(12,2) not null check (estimated_max >= estimated_min),
+  actual_cost numeric(12,2) check (actual_cost is null or actual_cost >= 0),
+  is_paid boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists set_budget_costs_updated_at on public.budget_costs;
+create trigger set_budget_costs_updated_at before update on public.budget_costs for each row execute function public.set_updated_at();
+create index if not exists budget_costs_user_id_idx on public.budget_costs(user_id);
+create index if not exists budget_costs_name_idx on public.budget_costs(name);
