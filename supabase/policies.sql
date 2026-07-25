@@ -5,6 +5,7 @@ alter table public.seating_tables enable row level security;
 alter table public.wedding_day_schedule enable row level security;
 alter table public.wedding_locations enable row level security;
 alter table public.location_costs enable row level security;
+alter table public.budget_costs enable row level security;
 
 -- Private deployment mode: every authenticated account belongs to the same
 -- wedding planning workspace. This lets both partners see and manage the same
@@ -103,3 +104,12 @@ drop policy if exists "location_costs_update_authenticated" on public.location_c
 create policy "location_costs_update_authenticated" on public.location_costs for update to authenticated using (true) with check (true);
 drop policy if exists "location_costs_delete_authenticated" on public.location_costs;
 create policy "location_costs_delete_authenticated" on public.location_costs for delete to authenticated using (true);
+
+drop policy if exists "budget_costs_select_authenticated" on public.budget_costs;
+create policy "budget_costs_select_authenticated" on public.budget_costs for select to authenticated using (true);
+drop policy if exists "budget_costs_insert_authenticated" on public.budget_costs;
+create policy "budget_costs_insert_authenticated" on public.budget_costs for insert to authenticated with check (true);
+drop policy if exists "budget_costs_update_authenticated" on public.budget_costs;
+create policy "budget_costs_update_authenticated" on public.budget_costs for update to authenticated using (true) with check (true);
+drop policy if exists "budget_costs_delete_authenticated" on public.budget_costs;
+create policy "budget_costs_delete_authenticated" on public.budget_costs for delete to authenticated using (true);
