@@ -184,8 +184,8 @@ textarea {
 .guest-hero img {
   display: block;
   width: 100%;
-  max-height: 420px;
-  object-fit: cover;
+  height: auto;
+  object-fit: contain;
 }
 .stat {
   padding: 18px;
