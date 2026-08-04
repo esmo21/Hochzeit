@@ -162,3 +162,17 @@ drop trigger if exists set_budget_costs_updated_at on public.budget_costs;
 create trigger set_budget_costs_updated_at before update on public.budget_costs for each row execute function public.set_updated_at();
 create index if not exists budget_costs_user_id_idx on public.budget_costs(user_id);
 create index if not exists budget_costs_name_idx on public.budget_costs(name);
+
+create table if not exists public.notes (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  title text not null check (length(btrim(title)) > 0),
+  content text,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+drop trigger if exists set_notes_updated_at on public.notes;
+create trigger set_notes_updated_at before update on public.notes for each row execute function public.set_updated_at();
+create index if not exists notes_user_id_idx on public.notes(user_id);
+create index if not exists notes_updated_at_idx on public.notes(updated_at);
