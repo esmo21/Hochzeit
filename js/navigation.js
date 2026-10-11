@@ -14,7 +14,7 @@ export function initNavigation() {
 
   const current = location.pathname.split("/").pop() || "index.html";
   document.querySelectorAll(".nav-link").forEach((link) => {
-    if (link.getAttribute("href") === current) {
+    if (link.getAttribute("href") === current || (["standesamt.html", "location.html", "moodboard.html"].includes(current) && link.getAttribute("href") === "archiv.html")) {
       link.setAttribute("aria-current", "page");
     }
   });
