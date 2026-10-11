@@ -22,3 +22,7 @@
 @media (max-width: 900px) { .archive-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 580px) { .archive-grid { grid-template-columns: 1fr; } .archive-card { min-height: 210px; padding: 22px; } }
 @media (prefers-reduced-motion: reduce) { .archive-card { transition: none; } }
+
+.archive-back { margin: 0 0 22px; }
+.archive-back a { display: inline-flex; align-items: center; min-height: 42px; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; background: var(--surface); text-decoration: none; font-weight: 700; }
+.archive-back a:hover { background: var(--surface-2); }
