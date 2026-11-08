@@ -1,6 +1,7 @@
 import { supabase } from "./supabase-client.js";
 import { requireAuth } from "./auth.js";
 import { initNavigation } from "./navigation.js";
+import { buildGuestCsv } from "./guest-export.mjs";
 import {
   $,
   clearChildren,
@@ -91,6 +92,7 @@ function totals() {
 }
 function render() {
   totals();
+  $("#guest-export").disabled = rows.length === 0;
   const body = $("#guest-table-body");
   clearChildren(body);
   const arr = filtered();
@@ -133,6 +135,22 @@ function render() {
     tr.append(td);
     body.append(tr);
   });
+}
+function exportGuests() {
+  if (!rows.length) return;
+  try {
+    const csv = buildGuestCsv(rows, tables);
+    const url = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "gaesteliste.csv";
+    document.body.append(link);
+    link.click();
+    link.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+  } catch {
+    setMessage($("#guest-message"), "Die Gästeliste konnte nicht exportiert werden.", "error");
+  }
 }
 function reset() {
   editing = null;
@@ -184,6 +202,7 @@ async function init() {
   $("#guest-search").addEventListener("input", render);
   $("#guest-sort").addEventListener("change", render);
   $("#guest-cancel").addEventListener("click", reset);
+  $("#guest-export").addEventListener("click", exportGuests);
   form().addEventListener("submit", async (e) => {
     e.preventDefault();
     const family = $("#family-name").value.trim(),
